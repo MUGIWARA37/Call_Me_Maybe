@@ -2,7 +2,7 @@ from pydantic import BaseModel, model_validator
 from typing import Dict
 
 
-valid_data_type = ["number", "string"]
+valid_data_type = ["number", "string", "boolean", "integer"]
 
 class ParameterSpec(BaseModel):
     type: str
