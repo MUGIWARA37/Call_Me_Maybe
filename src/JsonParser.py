@@ -36,10 +36,6 @@ class JsonParser (BaseModel):
 
 
 
-
-
-
-
 # if __name__ == "__main__":
 # json_file = JsonParser(path=Path("data/input"), name="functions_definition.json")
 # print(json_file.read_json_file())
