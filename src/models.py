@@ -1,11 +1,37 @@
-from pydantic import BaseModul, Field, ValidationError, ModulValidator
-from typing import Dict, Any
+from pydantic import BaseModel, model_validator
+from typing import Dict
 
 
-class FunctionDefinition(BaseModul):
-    name: str = Field(...)
-    description: str = Field(...)
-    parameters: Dict[str, Dict[str, str]]= Field(...)
-    returns:  Dict[str, Dict[str, str]] = Field(...)
+valid_data_type = ["number", "string"]
+
+class ParameterSpec(BaseModel):
+    type: str
     
-    @ModulValidator(mode="after")
+    @model_validator(mode='after')
+    def param_validator(self) -> 'ParameterSpec':
+        if not self.type in valid_data_type:
+            raise ValueError(f"Error: {self.type} is Invalide data type !!")
+        
+        return self
+
+class ReturnSpec(BaseModel):
+    type: str
+    
+    @model_validator(mode='after')
+    def return_validator(self) -> 'ReturnSpec':
+        if not self.type in valid_data_type:
+            raise ValueError(f"Error: {self.type} is Invalide data type !!")
+        
+        return self
+
+
+
+class FunctionDefinition(BaseModel):
+    name: str
+    description: str
+    parameters: Dict[str, ParameterSpec]
+    returns:  ReturnSpec
+    
+    
+class Prompt(BaseModel):
+    prompt: str
