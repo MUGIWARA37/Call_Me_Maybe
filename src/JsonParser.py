@@ -1,8 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import Any, List, Dict
 from pathlib import Path
 import json
-# from .models import FunctionDefinition
+from .models import FunctionDefinition, Prompt, ParameterSpec, ReturnSpec
 
 
 class JsonParser (BaseModel):
@@ -23,16 +23,12 @@ class JsonParser (BaseModel):
         except json.JSONDecodeError as e:
             raise ValueError(f"Error: Invalide JSON format in the file {self.name}") from e
 
-    # def load_functions(self) -> List[FunctionDefinition]:
-    #     try:
-    #         fns_def = [] 
-    #         data = self.read_json_file()
-    #         for definition in data:
-    #             fn_def = FunctionDefinition()
-            
-            
-    #     except Exception as e:
-    #         print(e)
+    def load_functions(self) -> list[FunctionDefinition]:
+        try:
+            data = self.read_json_file()
+            return [FunctionDefinition.model_validate(definition) for definition in data]
+        except ValidationError as e:
+            raise ValueError(f"Error: invalid function definition structure: {e}") from e
 
 
 
