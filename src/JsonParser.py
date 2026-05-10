@@ -2,7 +2,7 @@ from pydantic import BaseModel, ValidationError
 from typing import Any, List, Dict
 from pathlib import Path
 import json
-from .models import FunctionDefinition, Prompt, ParameterSpec, ReturnSpec
+from models import FunctionDefinition, Prompt
 
 
 class JsonParser (BaseModel):
@@ -42,5 +42,11 @@ class JsonParser (BaseModel):
 
 
 # if __name__ == "__main__":
-# json_file = JsonParser(path=Path("data/input"), name="functions_definition.json")
-# print(json_file.read_json_file())
+#     func_def = JsonParser(path=Path("data/input"), name="functions_definition.json")
+#     print(func_def.read_json_file())
+#     for dfn in func_def.load_functions():
+#         print(dfn)
+        
+#     prompt_str = JsonParser(path=Path("data/input"), name="function_calling_tests.json")
+#     for prm in prompt_str.load_prompts():
+#         print(prm)
