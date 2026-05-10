@@ -33,5 +33,13 @@ class FunctionDefinition(BaseModel):
     returns:  ReturnSpec
     
     
+    def __str__(self) -> str:
+        params = ", ".join(f"{key}: {parm.type}" for key, parm in self.parameters.items())
+        return f"prototype: def {self.name}({params}) -> {self.returns.type}"
+    
+    
 class Prompt(BaseModel):
     prompt: str
+    
+    def __str__(self):
+        return self.prompt

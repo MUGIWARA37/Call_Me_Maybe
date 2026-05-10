@@ -28,9 +28,14 @@ class JsonParser (BaseModel):
             data = self.read_json_file()
             return [FunctionDefinition.model_validate(definition) for definition in data]
         except ValidationError as e:
-            raise ValueError(f"Error: invalid function definition structure: {e}") from e
+            raise ValueError(f"Error: Invalid function definition structure: {e}") from e
 
-
+    def load_prompts(self) -> List[Prompt]:
+        try:
+            prmpt = self.read_json_file()
+            return [Prompt.model_validate(prompt) for prompt in prmpt]
+        except ValidationError as e:
+            raise ValueError(f"Error: Invalide prompt structure : {e}") from e
 
 
 
