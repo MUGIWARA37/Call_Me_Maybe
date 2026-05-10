@@ -33,6 +33,13 @@ class FunctionDefinition(BaseModel):
     returns:  ReturnSpec
     
     
+    @model_validator(mode='after')
+    def proto_validator(self) -> 'FunctionDefinition':
+        if self.name == "":
+            raise ValueError(f"Error: The function name can not be empty")
+        
+        return self
+    
     def __str__(self) -> str:
         params = ", ".join(f"{key}: {parm.type}" for key, parm in self.parameters.items())
         return f"prototype: def {self.name}({params}) -> {self.returns.type}"
