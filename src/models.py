@@ -40,6 +40,6 @@ class FunctionDefinition(BaseModel):
     
 class Prompt(BaseModel):
     prompt: str
-    
+
     def __str__(self):
         return self.prompt
