@@ -6,7 +6,6 @@ __pycache__/
 .venv/
 data/output/
 *.pyc
-llm_sdk/
 
 # =========================
 # Virtual environments
