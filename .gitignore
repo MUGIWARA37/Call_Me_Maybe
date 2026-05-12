@@ -2,8 +2,11 @@
 # Python cache
 # =========================
 __pycache__/
-*.py[cod]
-*$py.class
+.mypy_cache/
+.venv/
+data/output/
+*.pyc
+llm_sdk/
 
 # =========================
 # Virtual environments

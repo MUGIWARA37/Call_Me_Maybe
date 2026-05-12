@@ -251,7 +251,6 @@ class Decoder(BaseModel):
             state = new_state
 
         json_str = self.model.decode(generated)
-        print(f"Generated string: {repr(json_str)}")
         decoder_json = json.JSONDecoder()
         result, _ = decoder_json.raw_decode(json_str.strip())
         return result
