@@ -2,7 +2,7 @@ from pydantic import BaseModel, ValidationError
 from typing import Any, List, Dict
 from pathlib import Path
 import json
-from models import FunctionDefinition, Prompt
+from .models import FunctionDefinition, Prompt
 
 
 class JsonParser (BaseModel):
