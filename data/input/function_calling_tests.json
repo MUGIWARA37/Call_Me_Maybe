@@ -6,22 +6,7 @@
     "prompt": "What is the sum of 265 and 345?"
   },
   {
-    "prompt": "Greet shrek"
-  },
-  {
-    "prompt": "Greet john"
-  },
-  {
-    "prompt": "Reverse the string 'hello'"
-  },
-  {
-    "prompt": "Reverse the string 'world'"
-  },
-  {
-    "prompt": "What is the square root of 16?"
-  },
-  {
-    "prompt": "Calculate the square root of 144"
+    "prompt": "Print 'hello' with new line if nl is True and without new line if nl is false"
   },
   {
     "prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS"

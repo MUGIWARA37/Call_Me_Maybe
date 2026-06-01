@@ -1,53 +1,17 @@
 [
   {
-    "name": "fn_add_numbers",
-    "description": "Add two numbers together and return their sum.",
-    "parameters": {
-      "a": {
-        "type": "number"
-      },
-      "b": {
-        "type": "number"
-      }
-    },
-    "returns": {
-      "type": "number"
-    }
-  },
-  {
-    "name": "fn_greet",
-    "description": "Generate a greeting message for a person by name.",
-    "parameters": {
-      "name": {
-        "type": "string"
-      }
-    },
-    "returns": {
-      "type": "string"
-    }
-  },
-  {
-    "name": "fn_reverse_string",
-    "description": "Reverse a string and return the reversed result.",
+    "name": "fn_newline",
+    "description": "Prints the string with new line if nl is true",
     "parameters": {
       "s": {
         "type": "string"
+      },
+      "nl":{
+        "type": "boolean"
       }
     },
     "returns": {
       "type": "string"
-    }
-  },
-  {
-    "name": "fn_get_square_root",
-    "description": "Calculate the square root of a number.",
-    "parameters": {
-      "a": {
-        "type": "number"
-      }
-    },
-    "returns": {
-      "type": "number"
     }
   },
   {
