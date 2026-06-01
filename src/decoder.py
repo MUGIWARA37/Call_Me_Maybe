@@ -289,4 +289,9 @@ class Decoder(BaseModel):
         output = self.model.decode(generated_tokens)
         print(f"[debug] output: {repr(output)}")
         result, _ = json.JSONDecoder().raw_decode(output)
+        if result.get("name") == "unknown":
+            user_request = prompt.split("User request: ")[1].split("\n")[0]
+            raise ValueError(
+                f"The prompt '{user_request}' requires a non-existing function"
+            )
         return result

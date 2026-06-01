@@ -26,6 +26,16 @@ class JsonParser (BaseModel):
     def load_functions(self) -> list[FunctionDefinition]:
         try:
             data = self.read_json_file()
+            data.insert(0,{
+                "name": "unknown",
+                "description": "The prompt requires a non-existing function",
+                "parameters": {
+                    "virtual_param": {
+                        "type" :"number"}},
+                "returns": {
+                    "type": "number"
+                }
+            })
             return [FunctionDefinition.model_validate(definition) for definition in data]
         except ValidationError as e:
             raise ValueError(f"Error: Invalid function definition structure: {e}") from e
