@@ -6,15 +6,22 @@ class PromptBuilder(BaseModel):
     functions: List[FunctionDefinition]
     
     
-    def build(self,prompt: Prompt) -> str:
+    def build_selection(self,prompt: Prompt) -> str:
+        """Build a prompt for function selection only.
+
+        Args:
+            prompt: The user request.
+
+        Returns:
+            A prompt string asking the LLM to pick a function name.
+        """
         functions_str = "\n".join(str(fn) for fn in self.functions)
         
         return (
             f"You are a function calling assistant.\n\n"
             f"Available functions:\n{functions_str}\n\n"
             f"User request: {prompt.prompt}\n\n"
-            f"Respond with only a JSON object in this exact format:\n"
-            f'{{"name": "function_name", "parameters": {{"arg1": value1}}}}'
+            "Reply with only the function name:"
         )
         
         
@@ -47,4 +54,4 @@ class PromptBuilder(BaseModel):
     # prompt = Prompt(prompt="What is the sum of 40 and 2?")
 # 
     # builder = PromptBuilder(functions=functions)
-    # print(builder.build(prompt))
+    # print(builder.build_selection(prompt))

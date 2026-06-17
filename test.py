@@ -13,7 +13,7 @@ from src.vocabulary import Vocabulary
 from src.decoder import Decoder
 from src.jsonparser import JsonParser
 from src.prompt_builder import PromptBuilder
-from src.pipeline import select_function
+# from src.pipeline import select_function
 
 
 def main():
