@@ -11,7 +11,6 @@ def select_function(
                     ) -> FunctionDefinition:
     builder = PromptBuilder(functions=functions)
     builded_prompt = builder.build_selection(Prompt(prompt=prompt))
-    builded_prompt_ids = [int(x) for x in model.encode(builded_prompt)[0]]
     
     
     input_ids = [int(x) for x in model.encode(builded_prompt)[0]]
@@ -22,7 +21,7 @@ def select_function(
     for fn in functions:
         full = [int(x) for x in model.encode(builded_prompt + fn.name)[0]]
         # the function name tokens are the difference
-        name_tokens = full[len(builded_prompt_ids):]
+        name_tokens = full[len(input_ids):]
         candidates.append((fn, name_tokens))  
     
     i = 0
