@@ -25,6 +25,21 @@ class PromptBuilder(BaseModel):
         )
         
         
+    def build_parameters(self, prompt: Prompt, function: FunctionDefinition) -> str:
+        signature = f"{function.name}({', '.join(f'{name}: {spec.type}' for name, spec in function.parameters.items())}) -> {function.returns.type}"
+        
+        example = "{" + ", ".join(f'"{name}": <{spec.type}>' for name, spec in function.parameters.items()) + "}"
+        
+        return (
+            f"You are a parameter extractor.\n\n"
+            f"Function: {signature}\n\n"
+            f"User request: {prompt.prompt}\n\n"
+            f"Extract the exact parameter values from the user request matching the function signature above.\n"
+            f"Only output a valid JSON object with no explanation:\n"
+            f"{example}"
+        )
+        
+        
         
 
 
