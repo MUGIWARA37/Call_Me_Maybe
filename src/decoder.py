@@ -11,8 +11,8 @@ from pydantic import BaseModel
 import json
 from llm_sdk import Small_LLM_Model
 from .vocabulary import Vocabulary
-from .models import FunctionDefinition , Prompt
-from .prompt_builder import PromptBuilder
+from .models import FunctionDefinition
+from .prompt_builder import PromptBuilder, Prompt
 from typing import Any
 
 
@@ -27,6 +27,7 @@ class Decoder(BaseModel):
         built_prompt = builder.build_parameters(Prompt(prompt=prompt), function)
 
         input_ids = [int(x) for x in self.model.encode(built_prompt)[0]]
+        prompt_length = len(input_ids)
 
         # force {
         logits = self.model.get_logits_from_input_ids(input_ids)
@@ -126,6 +127,57 @@ class Decoder(BaseModel):
                     input_ids.append(token_id)
 
         # decode and return
-        generated = self.model.decode(input_ids[len([int(x) for x in self.model.encode(built_prompt)[0]]):])
+        generated = self.model.decode(input_ids[prompt_length:])
         result, _ = json.JSONDecoder().raw_decode(generated)
         return result
+
+
+
+
+# if __name__ == "__main__":
+#     import os
+#     os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
+#     import sys
+#     sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
+#     sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
+#     sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe")
+
+#     from llm_sdk import Small_LLM_Model
+#     from src.models import FunctionDefinition, ParameterSpec, ReturnSpec
+#     from src.vocabulary import Vocabulary
+#     from src.decoder import Decoder
+
+#     model = Small_LLM_Model()
+#     vocabulary = Vocabulary.from_model(model)
+#     decoder = Decoder(model=model, vocabulary=vocabulary)
+
+#     functions = [
+#         FunctionDefinition(
+#             name="fn_add_numbers",
+#             description="Add two numbers together and return their sum.",
+#             parameters={
+#                 "a": ParameterSpec(type="number"),
+#                 "b": ParameterSpec(type="number")
+#             },
+#             returns=ReturnSpec(type="number")
+#         ),
+#         FunctionDefinition(
+#             name="fn_greet",
+#             description="Generate a greeting message for a person by name.",
+#             parameters={
+#                 "name": ParameterSpec(type="string")
+#             },
+#             returns=ReturnSpec(type="string")
+#         ),
+#     ]
+
+#     tests = [
+#         ("What is the sum of -2885.55 and ---3214.11?", functions[0]),
+#         ("Greet John", functions[1]),
+#     ]
+
+#     for prompt, function in tests:
+#         result = decoder.generate(prompt, function)
+#         print(f"prompt: {prompt}")
+#         print(f"result: {result}")
+#         print()
