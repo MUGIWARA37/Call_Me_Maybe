@@ -5,23 +5,20 @@ import json
 from .models import FunctionDefinition, Prompt
 
 
-class JsonParser (BaseModel):
-    path: Path
-    name: str
-    
-    
-    def read_json_file(self) ->  List[Any] | Dict[str, Any]:
-        
-        
+class JsonParser(BaseModel):
+    filepath: str
+
+    def read_json_file(self) -> List[Any] | Dict[str, Any]:
         try:
-            with open(self.path / self.name, "r", encoding="utf-8") as f:
+            with open(self.filepath, "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Error: the path {self.path} or the name {self.name} is inccorect !!") from e
+            raise FileNotFoundError(f"Error: the path {self.filepath} is incorrect!!") from e
         except PermissionError as e:
-            raise PermissionError(f"Error: you don't have the right to read from the file {self.path / self.name}") from e
+            raise PermissionError(f"Error: you don't have the right to read from the file {self.filepath}") from e
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error: Invalide JSON format in the file {self.name}") from e
+            raise ValueError(f"Error: Invalid JSON format in the file {self.filepath}") from e
+
 
     def load_functions(self) -> list[FunctionDefinition]:
         try:
