@@ -1,6 +1,7 @@
 from .models import FunctionDefinition
 from .prompt_builder import PromptBuilder, Prompt
 from llm_sdk import Small_LLM_Model
+import numpy as np
 
 
 
@@ -13,13 +14,13 @@ def select_function(
     builded_prompt = builder.build_selection(Prompt(prompt=prompt))
     
     
-    input_ids = [int(x) for x in model.encode(builded_prompt)[0]]
+    input_ids = model.encode(builded_prompt)[0].numpy().tolist()
     
     candidates = []
     
     
     for fn in functions:
-        full = [int(x) for x in model.encode(builded_prompt + fn.name)[0]]
+        full = model.encode(builded_prompt + fn.name)[0].numpy().tolist()
         # the function name tokens are the difference
         name_tokens = full[len(input_ids):]
         candidates.append((fn, name_tokens))  
@@ -31,9 +32,10 @@ def select_function(
         valid_ids = {tokens[i] for _, tokens in candidates if i < len(tokens)}
 
 
-        for idx in range(len(logits)):
-            if idx not in valid_ids:
-                logits[idx] = float('-inf')
+        logits = np.array(logits)
+        mask = np.full(len(logits), float('-inf'))
+        mask[list(valid_ids)] = logits[list(valid_ids)]
+        logits = mask.tolist()
 
         token_id = logits.index(max(logits))
         

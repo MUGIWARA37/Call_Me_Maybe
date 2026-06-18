@@ -14,6 +14,7 @@ from .vocabulary import Vocabulary
 from .models import FunctionDefinition
 from .prompt_builder import PromptBuilder, Prompt
 from typing import Any
+import numpy as np
 
 
 class Decoder(BaseModel):
@@ -22,34 +23,37 @@ class Decoder(BaseModel):
     
     model_config = {"arbitrary_types_allowed": True}
     
+    def _mask_logits(self, logits: list, valid_ids: set) -> list:
+        logits = np.array(logits)
+        mask = np.full(len(logits), float('-inf'))
+        mask[list(valid_ids)] = logits[list(valid_ids)]
+        return mask.tolist()
+    
     def generate(self, prompt: str, function: FunctionDefinition) -> dict[str, Any]:
         builder = PromptBuilder(functions=[function])
         built_prompt = builder.build_parameters(Prompt(prompt=prompt), function)
 
-        input_ids = [int(x) for x in self.model.encode(built_prompt)[0]]
+        input_ids = self.model.encode(built_prompt)[0].numpy().tolist()
         prompt_length = len(input_ids)
 
         # force {
         logits = self.model.get_logits_from_input_ids(input_ids)
-        for i in range(len(logits)):
-            if i != self.vocabulary.token_to_id['{']:
-                logits[i] = float('-inf')
+        logits = self._mask_logits(logits, {self.vocabulary.token_to_id['{']})
+        
         token_id = logits.index(max(logits))
         input_ids.append(token_id)
 
         for param_name, param_spec in function.parameters.items():
             # force param name
-            param_name_ids = [int(x) for x in self.model.encode(f'"{param_name}": ')[0]]
+            param_name_ids = self.model.encode(f'"{param_name}": ')[0].numpy().tolist()
             for token in param_name_ids:
                 logits = self.model.get_logits_from_input_ids(input_ids)
-                for i in range(len(logits)):
-                    if i != token:
-                        logits[i] = float('-inf')
+                logits = self._mask_logits(logits, {token})
                 token_id = logits.index(max(logits))
                 input_ids.append(token_id)
 
             is_last = list(function.parameters.keys())[-1] == param_name
-            sep_tokens = [int(x) for x in self.model.encode('}')[0]] if is_last else [int(x) for x in self.model.encode(', "')[0]]
+            sep_tokens = self.model.encode('}')[0].numpy().tolist() if is_last else self.model.encode(', ')[0].numpy().tolist()
 
             if param_spec.type in ("number", "integer"):
                 numeric_ids = [
@@ -60,39 +64,31 @@ class Decoder(BaseModel):
                 while True:
                     logits = self.model.get_logits_from_input_ids(input_ids)
                     allowed = numeric_ids + [sep_tokens[0]]
-                    for i in range(len(logits)):
-                        if i not in allowed:
-                            logits[i] = float('-inf')
+                    logits = self._mask_logits(logits, set(allowed))
                     token_id = logits.index(max(logits))
                     input_ids.append(token_id)
                     if token_id == sep_tokens[0]:
                         break
 
             elif param_spec.type == "boolean":
-                true_tokens = [int(x) for x in self.model.encode("true")[0]]
-                false_tokens = [int(x) for x in self.model.encode("false")[0]]
+                true_tokens = self.model.encode("true")[0].numpy().tolist()
+                false_tokens = self.model.encode("false")[0].numpy().tolist()
                 # first token: only allow true[0] or false[0]
                 logits = self.model.get_logits_from_input_ids(input_ids)
-                for i in range(len(logits)):
-                    if i not in {true_tokens[0], false_tokens[0]}:
-                        logits[i] = float('-inf')
+                logits = self._mask_logits(logits, {true_tokens[0],false_tokens[0]})  
                 token_id = logits.index(max(logits))
                 input_ids.append(token_id)
                 # force the rest of the chosen boolean
                 chosen = true_tokens if token_id == true_tokens[0] else false_tokens
                 for token in chosen[1:]:
                     logits = self.model.get_logits_from_input_ids(input_ids)
-                    for i in range(len(logits)):
-                        if i != token:
-                            logits[i] = float('-inf')
+                    logits = self._mask_logits(logits, {token})
                     token_id = logits.index(max(logits))
                     input_ids.append(token_id)
                 # force separator
                 for token in sep_tokens:
                     logits = self.model.get_logits_from_input_ids(input_ids)
-                    for i in range(len(logits)):
-                        if i != token:
-                            logits[i] = float('-inf')
+                    logits = self._mask_logits(logits, {token})
                     token_id = logits.index(max(logits))
                     input_ids.append(token_id)
 
@@ -100,34 +96,43 @@ class Decoder(BaseModel):
                 # force opening "
                 quote_id = self.vocabulary.token_to_id['"']
                 logits = self.model.get_logits_from_input_ids(input_ids)
-                for i in range(len(logits)):
-                    if i != quote_id:
-                        logits[i] = float('-inf')
+                logits = self._mask_logits(logits, {quote_id})
                 token_id = logits.index(max(logits))
                 input_ids.append(token_id)
-                # allow any token except "
+            
                 string_ids = [v for k, v in self.vocabulary.token_to_id.items() if '"' not in k]
+                generated_tokens = []
+            
                 while True:
                     logits = self.model.get_logits_from_input_ids(input_ids)
-                    allowed = string_ids + [quote_id]
-                    for i in range(len(logits)):
-                        if i not in allowed:
-                            logits[i] = float('-inf')
+                    logits = self._mask_logits(logits, set(string_ids + [quote_id]))
                     token_id = logits.index(max(logits))
                     input_ids.append(token_id)
+            
                     if token_id == quote_id:
                         break
+                    
+                    generated_tokens.append(token_id)
+            
+                    # detect repetition - if last 3 tokens repeat, force close
+                    if len(generated_tokens) >= 6:
+                        if generated_tokens[-3:] == generated_tokens[-6:-3]:
+                            logits = self.model.get_logits_from_input_ids(input_ids)
+                            logits = self._mask_logits(logits, {quote_id})
+                            token_id = logits.index(max(logits))
+                            input_ids.append(token_id)
+                            break
+                        
                 # force separator
                 for token in sep_tokens:
                     logits = self.model.get_logits_from_input_ids(input_ids)
-                    for i in range(len(logits)):
-                        if i != token:
-                            logits[i] = float('-inf')
+                    logits = self._mask_logits(logits, {token})
                     token_id = logits.index(max(logits))
                     input_ids.append(token_id)
 
         # decode and return
         generated = self.model.decode(input_ids[prompt_length:])
+        print(f"generated: {generated}")
         result, _ = json.JSONDecoder().raw_decode(generated)
         return result
 
