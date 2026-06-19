@@ -29,13 +29,25 @@ class PromptBuilder(BaseModel):
         signature = f"{function.name}({', '.join(f'{name}: {spec.type}' for name, spec in function.parameters.items())}) -> {function.returns.type}"
 
         example = "{" + ", ".join(f'"{name}": <{spec.type}>' for name, spec in function.parameters.items()) + "}"
+        regex_hint = ""
+        if any(name == "regex" for name in function.parameters):
+            regex_hint = (
+                f"\nRegex cheat sheet:\n"
+                f"  \\d+ = one or more digits\n"
+                f"  [aeiouAEIOU] = any vowel\n"
+                f"  word = exact word match\n"
+                f"  \\w+ = one or more word characters\n"
+                f"  .* = any characters\n"
+                f"Use the simplest regex that matches the user request.\n\n"
+            )
 
         return (
             f"You are a parameter extractor.\n\n"
             f"Function: {signature}\n\n"
             f"User request: '''{prompt.prompt}'''\n\n"
-            "Extract the exact parameter values from the user request only matching the function signature above.\n"
-            "Only output a valid JSON object with no explanation:\n"
+            f"Extract the exact parameter values from the user request matching the function signature above.\n"
+            f"{regex_hint}"
+            f"Only output a valid JSON object with no explanation:\n"
             f"{example}"
         )
         
