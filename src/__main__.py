@@ -25,21 +25,22 @@ def main():
     prompts = JsonParser(filepath=args.input).load_prompts()
 
     # init model and tools
-    model = Small_LLM_Model()
-    vocabulary = Vocabulary.from_model(model)
-    decoder = Decoder(model=model, vocabulary=vocabulary)
+    model_selector = Small_LLM_Model()
+    model_decoder = Small_LLM_Model("Qwen/Qwen2.5-Coder-0.5B")
+    vocabulary = Vocabulary.from_model(model_decoder)
+    decoder = Decoder(model=model_decoder, vocabulary=vocabulary)
 
     # process each prompt
     results = []
     for prompt in prompts:
-        function = select_function(prompt.prompt, functions, model)
+        function = select_function(prompt.prompt, functions, model_selector)
         parameters = decoder.generate(prompt.prompt, function)
         results.append({
             "prompt": prompt.prompt,
             "name": function.name,
             "parameters": parameters
         })
-        print(f"user request: {prompt}\nfunction selected: {function.name}\nParameteres choosed: {parameters}")
+        print(f"user request: {prompt.prompt}\nfunction selected: {function.name}\nParameteres choosed: {parameters}")
 
     # write output
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
