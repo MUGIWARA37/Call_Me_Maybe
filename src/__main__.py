@@ -18,6 +18,16 @@ def main():
     parser.add_argument("--functions_definition", default="data/input/functions_definition.json")
     parser.add_argument("--input", default="data/input/function_calling_tests.json")
     parser.add_argument("--output", default="data/output/function_calling_results.json")
+    parser.add_argument(
+        "--model_selector",
+        default="Qwen/Qwen3-0.6B",
+        help="HuggingFace model used for function selection (default: Qwen/Qwen3-0.6B)"
+    )
+    parser.add_argument(
+        "--model_decoder",
+        default="Qwen/Qwen2.5-Coder-0.5B",
+        help="HuggingFace model used for parameter decoding (default: Qwen/Qwen2.5-Coder-0.5B)"
+    )
     args = parser.parse_args()
 
     # load data
@@ -25,13 +35,14 @@ def main():
     prompts = JsonParser(filepath=args.input).load_prompts()
 
     # init model and tools
-    model_selector = Small_LLM_Model()
-    model_decoder = Small_LLM_Model("Qwen/Qwen2.5-Coder-0.5B")
+    model_selector = Small_LLM_Model(args.model_selector)
+    model_decoder = Small_LLM_Model(args.model_decoder)
     vocabulary = Vocabulary.from_model(model_decoder)
     decoder = Decoder(model=model_decoder, vocabulary=vocabulary)
 
     # process each prompt
     results = []
+    print("PROMTS PROCESSING IS STARTING !!")
     for prompt in prompts:
         function = select_function(prompt.prompt, functions, model_selector)
         parameters = decoder.generate(prompt.prompt, function)

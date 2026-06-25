@@ -26,30 +26,84 @@ class PromptBuilder(BaseModel):
         
         
     def build_parameters(self, prompt: Prompt, function: FunctionDefinition) -> str:
-        signature = f"{function.name}({', '.join(f'{name}: {spec.type}' for name, spec in function.parameters.items())}) -> {function.returns.type}"
+        """Build a prompt that extracts parameter values from a user request.
 
-        example = "{" + ", ".join(f'"{name}": <{spec.type}>' for name, spec in function.parameters.items()) + "}"
-        regex_hint = ""
-        if any(name == "regex" for name in function.parameters):
-            regex_hint = (
-                f"\nRegex cheat sheet:\n"
-                f"  \\d+ = one or more digits\n"
-                f"  [aeiouAEIOU] = any vowel\n"
-                f"  word = exact word match\n"
-                f"  \\w+ = one or more word characters\n"
-                f"  .* = any characters\n"
-                f"Use the simplest regex that matches the user request.\n\n"
+        Adds few-shot examples only when the function has a 'regex' parameter,
+        to guide the model toward concise regex patterns.
+
+        Args:
+            prompt: The user request.
+            function: The function whose parameters must be extracted.
+
+        Returns:
+            A prompt string ready to feed into the LLM decoder.
+        """
+        signature = (
+            f"{function.name}"
+            f"({', '.join(f'{n}: {s.type}' for n, s in function.parameters.items())})"
+            f" -> {function.returns.type}"
+        )
+        schema = (
+            "{"
+            + ", ".join(
+                f'"{n}": <{s.type}>' for n, s in function.parameters.items()
+            )
+            + "}"
+        )
+
+        few_shot = ""
+        if function.name == "fn_get_square_root":
+            few_shot = (
+                "Example:\n"
+                "User request: '''What is the square root of 16?'''\n"
+                "{\n"
+                '"a": 16.0\n'
+                "}\n\n"
+                "Example:\n"
+                "User request: '''Calculate the square root of 144'''\n"
+                "{\n"
+                '"a": 144.0\n'
+                "}\n\n"
+            )
+        elif "regex" in function.parameters:
+            few_shot = (
+                "Example:\n"
+                "User request: '''Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS'''\n"
+                "{\n"
+                '"source_string": "Hello 34 I\'m 233 years old",\n'
+                '"regex": "[0-9]+",\n'
+                '"replacement": "NUMBERS"\n'
+                "}\n\n"
+                "Example:\n"
+                "User request: '''Replace all vowels in 'Programming is fun' with asterisks'''\n"
+                "{\n"
+                '"source_string": "Programming is fun",\n'
+                '"regex": "[aeiouAEIOU]",\n'
+                '"replacement": "*"\n'
+                "}\n\n"
+                "Example:\n"
+                "User request: '''Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat''''\n"
+                "{\n"
+                '"source_string": "The cat sat on the mat with another cat",\n'
+                '"regex": "cat",\n'
+                '"replacement": "dog"\n'
+                "}\n\n"
             )
 
         return (
             f"You are a parameter extractor.\n\n"
             f"Function: {signature}\n\n"
-            f"User request: '''{prompt.prompt}'''\n\n"
-            f"Extract the exact parameter values from the user request matching the function signature above.\n"
-            f"{regex_hint}"
-            f"Only output a valid JSON object with no explanation:\n"
-            f"{example}"
+            f"Rules:\n"
+            f"- Extract the raw input values exactly as they appear in the user request.\n"
+            f"- Do NOT compute, solve, evaluate or execute the function.\n"
+            f"- Preserve the exact spelling and casing of all string values.\n\n"
+            f"{few_shot}"
+            f"Example:\n"
+            f"User request: '''{prompt.prompt}'''\n"
         )
+
+
+
         
         
         

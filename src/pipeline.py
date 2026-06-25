@@ -51,6 +51,7 @@ def select_function(
             raise ValueError(f"No matching function found for prompt: '{prompt}'")
 
         input_ids.append(token_id)
+        print(f"  [select] step {i}: {repr(model.decode([token_id]))}", flush=True)  # debug
         i += 1
         
 
