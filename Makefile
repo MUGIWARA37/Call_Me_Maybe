@@ -4,14 +4,24 @@
 
 FUNCTIONS := data/input/functions_definition.json
 INPUT     := data/input/function_calling_tests.json
-OUTPUT    := data/output
+OUTPUT    := data/output/function_calling_results.json
 
 TORCH_TARGET := /home/rhlou/goinfre/torch-packages
 
-.PHONY: all run install lint type-check check clean test help
+.PHONY: all install run debug lint lint-strict clean help
 
 # ── Default ───────────────────────────────────────────────────────────────────
 all: run
+
+# ── Install dependencies ──────────────────────────────────────────────────────
+install:
+	uv sync
+	mkdir -p $(TORCH_TARGET)
+	pip install torch \
+		--index-url https://download.pytorch.org/whl/cpu \
+		--target $(TORCH_TARGET)
+	pip install transformers huggingface_hub \
+		--target $(TORCH_TARGET)
 
 # ── Run the full pipeline ─────────────────────────────────────────────────────
 run:
@@ -20,48 +30,41 @@ run:
 		--input $(INPUT) \
 		--output $(OUTPUT)
 
-# ── Install torch + transformers into goinfre (once per session) ──────────────
-install:
-	mkdir -p $(TORCH_TARGET)
-	pip install torch \
-		--index-url https://download.pytorch.org/whl/cpu \
-		--target $(TORCH_TARGET)
-	pip install transformers huggingface_hub \
-		--target $(TORCH_TARGET)
+# ── Run in debug mode (pdb) ───────────────────────────────────────────────────
+debug:
+	uv run python -m pdb -m src \
+		--functions_definition $(FUNCTIONS) \
+		--input $(INPUT) \
+		--output $(OUTPUT)
 
-# ── Run decoder tests only ────────────────────────────────────────────────────
-test:
-	uv run python test.py
-
-# ── Linting ───────────────────────────────────────────────────────────────────
+# ── Lint: flake8 + mypy with required subject flags ───────────────────────────
 lint:
-	uv run flake8 src/ \
-		--max-line-length 99 \
-		--extend-ignore E203,W503
-
-# ── Type checking ─────────────────────────────────────────────────────────────
-type-check:
-	uv run mypy src/ \
+	uv run flake8 .
+	uv run mypy . \
+		--warn-return-any \
+		--warn-unused-ignores \
 		--ignore-missing-imports \
-		--strict
+		--disallow-untyped-defs \
+		--check-untyped-defs
 
-# ── Run both checks ───────────────────────────────────────────────────────────
-check: lint type-check
+# ── Strict lint: flake8 + mypy --strict ──────────────────────────────────────
+lint-strict:
+	uv run flake8 .
+	uv run mypy . --strict
 
-# ── Clean generated output ────────────────────────────────────────────────────
+# ── Clean caches (NOT the output file) ───────────────────────────────────────
 clean:
-	rm -rf $(OUTPUT)
-	find . -type d -name __pycache__ -exec rm -rf {} +
+	find . -type d -name __pycache__  -exec rm -rf {} +
+	find . -type d -name .mypy_cache  -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 help:
 	@echo ""
-	@echo "  make install      Install torch + transformers into goinfre (once per session)"
+	@echo "  make install      Install project dependencies"
 	@echo "  make run          Run the full pipeline"
-	@echo "  make test         Run decoder tests only"
-	@echo "  make lint         flake8 check"
-	@echo "  make type-check   mypy check"
-	@echo "  make check        lint + type-check"
-	@echo "  make clean        Remove output files and __pycache__"
+	@echo "  make debug        Run the pipeline under pdb (Python debugger)"
+	@echo "  make lint         flake8 + mypy (required flags from subject)"
+	@echo "  make lint-strict  flake8 + mypy --strict"
+	@echo "  make clean        Remove __pycache__, .mypy_cache, and .pyc files"
 	@echo ""

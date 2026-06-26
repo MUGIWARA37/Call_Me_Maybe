@@ -4,106 +4,56 @@ from llm_sdk import Small_LLM_Model
 import numpy as np
 
 
-
 def select_function(
-                    prompt: str,
-                    functions: list[FunctionDefinition],
-                    model: Small_LLM_Model
-                    ) -> FunctionDefinition:
+    prompt: str,
+    functions: list[FunctionDefinition],
+    model: Small_LLM_Model
+) -> FunctionDefinition:
+    """Pick the right function for a prompt using token-level constrained search.
+
+    How it works:
+    1. Build a selection prompt listing all available functions.
+    2. Tokenise each function name to get its token sequence.
+    3. At each step, only allow tokens that appear next in at least one candidate.
+    4. Keep only candidates whose token matches the chosen token.
+    5. Stop when one candidate remains.
+    """
     builder = PromptBuilder(functions=functions)
-    builded_prompt = builder.build_selection(Prompt(prompt=prompt))
-    
-    
-    input_ids = model.encode(builded_prompt)[0].numpy().tolist()
-    
+    base_prompt = builder.build_selection(Prompt(prompt=prompt))
+    base_ids = model.encode(base_prompt)[0].numpy().tolist()
+
+    # Build (function, name_token_list) pairs.
     candidates = []
-    
-    
     for fn in functions:
-        full = model.encode(builded_prompt + fn.name)[0].numpy().tolist()
-        # the function name tokens are the difference
-        name_tokens = full[len(input_ids):]
-        candidates.append((fn, name_tokens))  
-    
-    i = 0
+        full = model.encode(base_prompt + fn.name)[0].numpy().tolist()
+        name_tokens = full[len(base_ids):]
+        candidates.append((fn, name_tokens))
+
+    input_ids = list(base_ids)
+    step = 0
+
     while len(candidates) > 1:
         logits = model.get_logits_from_input_ids(input_ids)
 
-        valid_ids = {tokens[i] for _, tokens in candidates if i < len(tokens)}
+        # Only allow tokens that appear at position `step` in a live candidate.
+        valid_ids = {tokens[step] for _, tokens in candidates if step < len(tokens)}
 
-
-        logits = np.array(logits)
         mask = np.full(len(logits), float('-inf'))
-        mask[list(valid_ids)] = logits[list(valid_ids)]
-        logits = mask.tolist()
+        mask[list(valid_ids)] = np.array(logits)[list(valid_ids)]
+        best_token = int(np.argmax(mask))
 
-        token_id = logits.index(max(logits))
-        
-
+        # Drop candidates that diverge from the chosen token.
         candidates = [
             (fn, tokens)
             for fn, tokens in candidates
-            if i < len(tokens) and tokens[i] == token_id
+            if step < len(tokens) and tokens[step] == best_token
         ]
-        
 
-        if len(candidates) == 0:
+        if not candidates:
             raise ValueError(f"No matching function found for prompt: '{prompt}'")
 
-        input_ids.append(token_id)
-        print(f"  [select] step {i}: {repr(model.decode([token_id]))}", flush=True)  # debug
-        i += 1
-        
+        input_ids.append(best_token)
+        print(f"  [select] step {step}: {repr(model.decode([best_token]))}", flush=True)
+        step += 1
 
     return candidates[0][0]
-
-
-
-
-
-# if __name__ == "__main__":
-#     import os
-#     os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
-#     import sys
-#     sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
-#     sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
-#     sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe")
-
-#     from llm_sdk import Small_LLM_Model
-#     from src.models import FunctionDefinition, ParameterSpec, ReturnSpec
-
-#     # replace relative imports at top of file temporarily
-#     from src.prompt_builder import PromptBuilder, Prompt
-
-#     model = Small_LLM_Model()
-
-#     functions = [
-#         FunctionDefinition(
-#             name="fn_add_numbers",
-#             description="Add two numbers together and return their sum.",
-#             parameters={
-#                 "a": ParameterSpec(type="number"),
-#                 "b": ParameterSpec(type="number")
-#             },
-#             returns=ReturnSpec(type="number")
-#         ),
-#         FunctionDefinition(
-#             name="fn_greet",
-#             description="Generate a greeting message for a person by name.",
-#             parameters={
-#                 "name": ParameterSpec(type="string")
-#             },
-#             returns=ReturnSpec(type="string")
-#         )
-#     ]
-
-#     prompts = [
-#         "What is the sum of 2 and 3?",
-#         "Greet John",
-#     ]
-
-#     for prompt in prompts:
-#         result = select_function(prompt, functions, model)
-#         print(f"prompt: {prompt}")
-#         print(f"selected: {result.name}")
-#         print()

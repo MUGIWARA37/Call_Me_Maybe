@@ -1,59 +1,46 @@
 from pydantic import BaseModel, ValidationError
 from typing import Any, List, Dict
-from pathlib import Path
 import json
 from .models import FunctionDefinition, Prompt
 
 
 class JsonParser(BaseModel):
+    """Reads a JSON file and returns validated model objects."""
+
     filepath: str
 
     def read_json_file(self) -> List[Any] | Dict[str, Any]:
+        """Open the file and return the raw parsed JSON."""
         try:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Error: the path {self.filepath} is incorrect!!") from e
+            raise FileNotFoundError(f"File not found: {self.filepath}") from e
         except PermissionError as e:
-            raise PermissionError(f"Error: you don't have the right to read from the file {self.filepath}") from e
+            raise PermissionError(f"Cannot read file: {self.filepath}") from e
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error: Invalid JSON format in the file {self.filepath}") from e
-
+            raise ValueError(f"Invalid JSON in file: {self.filepath}") from e
 
     def load_functions(self) -> list[FunctionDefinition]:
+        """Load function definitions and prepend the 'unknown' fallback."""
         try:
             data = self.read_json_file()
-            data.insert(0,{
+            # 'unknown' is prepended so the selector always has a fallback
+            # when no real function matches the prompt.
+            data.insert(0, {
                 "name": "unknown",
                 "description": "The prompt requires a non-existing function",
-                "parameters": {
-                    "virtual_param": {
-                        "type" :"number"}},
-                "returns": {
-                    "type": "number"
-                }
+                "parameters": {"virtual_param": {"type": "number"}},
+                "returns": {"type": "number"}
             })
-            return [FunctionDefinition.model_validate(definition) for definition in data]
+            return [FunctionDefinition.model_validate(d) for d in data]
         except ValidationError as e:
-            raise ValueError(f"Error: Invalid function definition structure: {e}") from e
+            raise ValueError(f"Invalid function definition: {e}") from e
 
     def load_prompts(self) -> List[Prompt]:
+        """Load user prompts from the JSON file."""
         try:
-            prmpt = self.read_json_file()
-            return [Prompt.model_validate(prompt) for prompt in prmpt]
+            data = self.read_json_file()
+            return [Prompt.model_validate(p) for p in data]
         except ValidationError as e:
-            raise ValueError(f"Error: Invalide prompt structure : {e}") from e
-
-
-
-
-
-# if __name__ == "__main__":
-#     func_def = JsonParser(path=Path("data/input"), name="functions_definition.json")
-#     print(func_def.read_json_file())
-#     for dfn in func_def.load_functions():
-#         print(dfn)
-        
-#     prompt_str = JsonParser(path=Path("data/input"), name="function_calling_tests.json")
-#     for prm in prompt_str.load_prompts():
-#         print(prm)
+            raise ValueError(f"Invalid prompt structure: {e}") from e
