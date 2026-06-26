@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ValidationError
-from typing import Any, List, Dict
+from typing import Any, List, Dict, cast
 import json
 from .models import FunctionDefinition, Prompt
 
@@ -13,18 +13,28 @@ class JsonParser(BaseModel):
         """Open the file and return the raw parsed JSON."""
         try:
             with open(self.filepath, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return cast(List[Any] | Dict[str, Any], json.load(f))
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"File not found: {self.filepath}") from e
+            raise FileNotFoundError(
+                f"File not found: {self.filepath}"
+            ) from e
         except PermissionError as e:
-            raise PermissionError(f"Cannot read file: {self.filepath}") from e
+            raise PermissionError(
+                f"Cannot read file: {self.filepath}"
+            ) from e
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in file: {self.filepath}") from e
+            raise ValueError(
+                f"Invalid JSON in file: {self.filepath}"
+            ) from e
 
     def load_functions(self) -> list[FunctionDefinition]:
         """Load function definitions and prepend the 'unknown' fallback."""
         try:
             data = self.read_json_file()
+            if not isinstance(data, list):
+                raise ValueError(
+                    f"Expected a JSON array in: {self.filepath}"
+                )
             # 'unknown' is prepended so the selector always has a fallback
             # when no real function matches the prompt.
             data.insert(0, {

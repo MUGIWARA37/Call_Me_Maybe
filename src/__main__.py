@@ -1,7 +1,7 @@
 import os
-os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
-
 import sys
+
+os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
 sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
 sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
 
@@ -14,42 +14,55 @@ from .pipeline import select_function
 from .jsonparser import JsonParser
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Function-calling pipeline")
-    parser.add_argument("--functions_definition", default="data/input/functions_definition.json")
-    parser.add_argument("--input",               default="data/input/function_calling_tests.json")
-    parser.add_argument("--output",              default="data/output/function_calling_results.json")
-    parser.add_argument("--model_selector",      default="Qwen/Qwen3-0.6B")
-    parser.add_argument("--model_decoder",       default="Qwen/Qwen2.5-Coder-0.5B")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Function-calling pipeline"
+    )
+    parser.add_argument(
+        "--functions_definition",
+        default="data/input/functions_definition.json"
+    )
+    parser.add_argument(
+        "--input",
+        default="data/input/function_calling_tests.json"
+    )
+    parser.add_argument(
+        "--output",
+        default="data/output/function_calling_results.json"
+    )
     args = parser.parse_args()
 
     # Load input files.
     functions = JsonParser(filepath=args.functions_definition).load_functions()
-    prompts   = JsonParser(filepath=args.input).load_prompts()
+    prompts = JsonParser(filepath=args.input).load_prompts()
 
     # Load models.
-    model_selector = Small_LLM_Model(args.model_selector)
-    model_decoder  = Small_LLM_Model(args.model_decoder)
-    vocabulary     = Vocabulary.from_model(model_decoder)
-    decoder        = Decoder(model=model_decoder, vocabulary=vocabulary)
+    model_selector = Small_LLM_Model()
+    model_decoder = Small_LLM_Model("Qwen/Qwen2.5-Coder-0.5B")
+    vocabulary = Vocabulary.from_model(model_decoder)
+    decoder = Decoder(model=model_decoder, vocabulary=vocabulary)
 
     # Run the pipeline on every prompt.
     results = []
     print("Processing prompts...")
     try:
         for prompt in prompts:
-            function   = select_function(prompt.prompt, functions, model_selector)
+            function = select_function(
+                prompt.prompt, functions, model_selector
+            )
             parameters = decoder.generate(prompt.prompt, function)
             results.append({
-                "prompt":     prompt.prompt,
-                "name":       function.name,
+                "prompt": prompt.prompt,
+                "name": function.name,
                 "parameters": parameters
             })
-            print(f"  request   : {prompt.prompt}")
-            print(f"  function  : {function.name}")
-            print(f"  parameters: {parameters}\n")
+            print(f"  User request   : {prompt.prompt}")
+            print(f"  Function choosed  : {function.name}")
+            print(f"  Parameters found: {parameters}\n")
     except KeyboardInterrupt:
-        print(f"\nInterrupted — saving {len(results)} partial result(s)...")
+        print(
+            f"\nInterrupted — saving {len(results)} partial result(s)..."
+        )
 
     # Write whatever results were collected (full run or partial).
     os.makedirs(os.path.dirname(args.output), exist_ok=True)

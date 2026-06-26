@@ -2,6 +2,8 @@ from .models import FunctionDefinition, Prompt
 from pydantic import BaseModel
 from typing import List
 
+__all__ = ["PromptBuilder", "Prompt"]
+
 
 class PromptBuilder(BaseModel):
     """Builds the text prompts that are fed into the LLM."""
@@ -18,33 +20,42 @@ class PromptBuilder(BaseModel):
             "Reply with only the function name:"
         )
 
-    def build_parameters(self, prompt: Prompt, function: FunctionDefinition) -> str:
-        """Build a prompt that asks the model to extract parameter values as JSON."""
+    def build_parameters(
+        self, prompt: Prompt, function: FunctionDefinition
+    ) -> str:
+        """Build a prompt that asks the model to extract parameter values."""
         signature = (
             f"{function.name}"
-            f"({', '.join(f'{n}: {s.type}' for n, s in function.parameters.items())})"
-            f" -> {function.returns.type}"
+            "("
+            + ", ".join(
+                f"{n}: {s.type}"
+                for n, s in function.parameters.items()
+            )
+            + f") -> {function.returns.type}"
         )
 
         few_shot = ""
         if "regex" in function.parameters:
             few_shot = (
                 "Example:\n"
-                "User request: '''Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS'''\n"
+                "User request: '''Replace all numbers in "
+                "\"Hello 34 I'm 233 years old\" with NUMBERS'''\n"
                 "{\n"
                 '"source_string": "Hello 34 I\'m 233 years old",\n'
                 '"regex": "[0-9]+",\n'
                 '"replacement": "NUMBERS"\n'
                 "}\n\n"
                 "Example:\n"
-                "User request: '''Replace all vowels in 'Programming is fun' with asterisks'''\n"
+                "User request: '''Replace all vowels in "
+                "'Programming is fun' with asterisks'''\n"
                 "{\n"
                 '"source_string": "Programming is fun",\n'
                 '"regex": "[aeiouAEIOU]",\n'
                 '"replacement": "*"\n'
                 "}\n\n"
                 "Example:\n"
-                "User request: '''Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat''''\n"
+                "User request: '''Substitute the word 'cat' with 'dog' "
+                "in 'The cat sat on the mat with another cat''''  \n"
                 "{\n"
                 '"source_string": "The cat sat on the mat with another cat",\n'
                 '"regex": "cat",\n'
@@ -56,9 +67,9 @@ class PromptBuilder(BaseModel):
             f"You are a parameter extractor.\n\n"
             f"Function: {signature}\n\n"
             f"Rules:\n"
-            f"- Extract the raw input values exactly as they appear in the user request.\n"
+            f"- Extract the raw input values exactly as they appear.\n"
             f"- Do NOT compute, solve, evaluate or execute the function.\n"
-            f"- Preserve the exact spelling and casing of all string values.\n\n"
+            f"- Preserve the exact spelling and casing of all strings.\n\n"
             f"{few_shot}"
             f"Example:\n"
             f"User request: '''{prompt.prompt}'''\n"

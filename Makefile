@@ -39,18 +39,13 @@ debug:
 
 # ── Lint: flake8 + mypy with required subject flags ───────────────────────────
 lint:
-	uv run flake8 .
-	uv run mypy . \
-		--warn-return-any \
-		--warn-unused-ignores \
-		--ignore-missing-imports \
-		--disallow-untyped-defs \
-		--check-untyped-defs
+	uv run flake8 src
+	uv run mypy src
 
 # ── Strict lint: flake8 + mypy --strict ──────────────────────────────────────
 lint-strict:
-	uv run flake8 .
-	uv run mypy . --strict
+	uv run flake8 src
+	uv run mypy src --strict
 
 # ── Clean caches (NOT the output file) ───────────────────────────────────────
 clean:

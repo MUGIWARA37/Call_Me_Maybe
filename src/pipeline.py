@@ -9,12 +9,13 @@ def select_function(
     functions: list[FunctionDefinition],
     model: Small_LLM_Model
 ) -> FunctionDefinition:
-    """Pick the right function for a prompt using token-level constrained search.
+    """Pick the right function for a prompt using constrained token search.
 
     How it works:
     1. Build a selection prompt listing all available functions.
     2. Tokenise each function name to get its token sequence.
-    3. At each step, only allow tokens that appear next in at least one candidate.
+    3. At each step, only allow tokens that appear next in at least one
+       candidate.
     4. Keep only candidates whose token matches the chosen token.
     5. Stop when one candidate remains.
     """
@@ -36,7 +37,9 @@ def select_function(
         logits = model.get_logits_from_input_ids(input_ids)
 
         # Only allow tokens that appear at position `step` in a live candidate.
-        valid_ids = {tokens[step] for _, tokens in candidates if step < len(tokens)}
+        valid_ids = {
+            tokens[step] for _, tokens in candidates if step < len(tokens)
+        }
 
         mask = np.full(len(logits), float('-inf'))
         mask[list(valid_ids)] = np.array(logits)[list(valid_ids)]
@@ -50,10 +53,11 @@ def select_function(
         ]
 
         if not candidates:
-            raise ValueError(f"No matching function found for prompt: '{prompt}'")
+            raise ValueError(
+                f"No matching function found for prompt: '{prompt}'"
+            )
 
         input_ids.append(best_token)
-        print(f"  [select] step {step}: {repr(model.decode([best_token]))}", flush=True)
         step += 1
 
     return candidates[0][0]
