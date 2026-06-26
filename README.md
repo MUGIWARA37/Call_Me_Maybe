@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by rhlou, ldevelle, pcamaren, crfernan.*
+*This project has been created as part of the 42 curriculum by rhlou*
 
 ---
 
@@ -274,4 +274,3 @@ AI assistance was used in this project for the following tasks:
 - **Documentation drafting**: generating first drafts of docstrings and the architecture map, then reviewing and correcting them.
 - **Regex few-shot examples**: getting suggestions for representative regex extraction examples and refining them manually.
 
-All AI-generated content was reviewed, tested, and understood before inclusion. No AI-generated code was used without being read, run, and validated by a team member.
