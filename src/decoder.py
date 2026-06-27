@@ -75,7 +75,7 @@ class Decoder(BaseModel):
     # ── One decoder per parameter type ────────────────────────────────────
 
     def _decode_integer_param(
-        self, input_ids: list[int], param_name: str, sep_tokens: list[int]
+        self, input_ids: list[int], sep_tokens: list[int]
     ) -> None:
         """Generate an integer value token by token (modifies input_ids)."""
         # Only digit/sign tokens are allowed, plus the separator to end.
@@ -97,7 +97,7 @@ class Decoder(BaseModel):
         input_ids.extend(sep_tokens)  # safety: force separator if 20 steps
 
     def _decode_number_param(
-        self, input_ids: list[int], param_name: str, sep_tokens: list[int]
+        self, input_ids: list[int], sep_tokens: list[int]
     ) -> None:
         """Generate a float value token by token (modifies input_ids).
 
@@ -135,7 +135,7 @@ class Decoder(BaseModel):
         input_ids.extend(sep_tokens)
 
     def _decode_boolean_param(
-        self, input_ids: list[int], param_name: str, sep_tokens: list[int]
+        self, input_ids: list[int], sep_tokens: list[int]
     ) -> None:
         """Generate 'true' or 'false' by forcing the first token of each."""
         true_tokens = self.model.encode("true")[0].numpy().tolist()
@@ -153,7 +153,6 @@ class Decoder(BaseModel):
     def _decode_string_value(
         self,
         input_ids: list[int],
-        param_name: str,
         use_repetition_penalty: bool = True
     ) -> str:
         """Generate a quoted string value (modifies input_ids in-place).
@@ -249,14 +248,14 @@ class Decoder(BaseModel):
             )
 
             if param_spec.type == "integer":
-                self._decode_integer_param(input_ids, param_name, sep_tokens)
+                self._decode_integer_param(input_ids, sep_tokens)
             elif param_spec.type == "number":
-                self._decode_number_param(input_ids, param_name, sep_tokens)
+                self._decode_number_param(input_ids, sep_tokens)
             elif param_spec.type == "boolean":
-                self._decode_boolean_param(input_ids, param_name, sep_tokens)
+                self._decode_boolean_param(input_ids, sep_tokens)
             elif param_spec.type == "string":
                 self._decode_string_value(
-                    input_ids, param_name, use_repetition_penalty=False
+                    input_ids, use_repetition_penalty=False
                 )
                 input_ids.extend(sep_tokens)
 
