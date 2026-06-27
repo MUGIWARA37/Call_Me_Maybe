@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import sys
 
@@ -5,13 +7,20 @@ os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
 sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
 sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
 
-import argparse  # noqa: E402
-import json  # noqa: E402
-from llm_sdk import Small_LLM_Model  # noqa: E402
-from .vocabulary import Vocabulary  # noqa: E402
-from .decoder import Decoder  # noqa: E402
-from .pipeline import select_function  # noqa: E402
-from .jsonparser import JsonParser  # noqa: E402
+
+try:
+    from llm_sdk import Small_LLM_Model
+    from .vocabulary import Vocabulary
+    from .decoder import Decoder
+    from .pipeline import select_function
+    from .jsonparser import JsonParser
+except ImportError as e:
+    print(f"Import error: {e}", file=sys.stderr)
+    print(
+        "Please run 'make install' to install required dependencies.",
+        file=sys.stderr
+    )
+    sys.exit(1)
 
 
 def main() -> None:
