@@ -5,13 +5,13 @@ os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
 sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
 sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
 
-import argparse
-import json
-from llm_sdk import Small_LLM_Model
-from .vocabulary import Vocabulary
-from .decoder import Decoder
-from .pipeline import select_function
-from .jsonparser import JsonParser
+import argparse  # noqa: E402
+import json  # noqa: E402
+from llm_sdk import Small_LLM_Model  # noqa: E402
+from .vocabulary import Vocabulary  # noqa: E402
+from .decoder import Decoder  # noqa: E402
+from .pipeline import select_function  # noqa: E402
+from .jsonparser import JsonParser  # noqa: E402
 
 
 def main() -> None:
@@ -34,7 +34,9 @@ def main() -> None:
 
     # Load input files.
     try:
-        functions = JsonParser(filepath=args.functions_definition).load_functions()
+        functions = JsonParser(
+            filepath=args.functions_definition
+        ).load_functions()
         prompts = JsonParser(filepath=args.input).load_prompts()
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)

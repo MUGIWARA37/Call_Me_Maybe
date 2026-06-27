@@ -5,15 +5,15 @@ os.environ["HF_HOME"] = "/home/rhlou/goinfre/huggingface"
 sys.path.insert(0, "/home/rhlou/goinfre/torch-packages")
 sys.path.insert(0, "/home/rhlou/Desktop/1337/Call_Me_Maybe/llm_sdk")
 
-from pydantic import BaseModel
-from collections import Counter
-import json
-from llm_sdk import Small_LLM_Model
-from .vocabulary import Vocabulary
-from .models import FunctionDefinition
-from .prompt_builder import PromptBuilder, Prompt
-from typing import Any, cast
-import numpy as np
+from pydantic import BaseModel  # noqa: E402
+from collections import Counter  # noqa: E402
+import json  # noqa: E402
+from llm_sdk import Small_LLM_Model  # noqa: E402
+from .vocabulary import Vocabulary  # noqa: E402
+from .models import FunctionDefinition  # noqa: E402
+from .prompt_builder import PromptBuilder, Prompt  # noqa: E402
+from typing import Any, cast  # noqa: E402
+import numpy as np  # noqa: E402
 
 
 class Decoder(BaseModel):
@@ -204,7 +204,7 @@ class Decoder(BaseModel):
         else:
             input_ids.append(quote_id)  # 100-token limit reached
 
-        raw = cast(str, self.model.decode(collected))
+        raw = self.model.decode(collected)
         # JSON strings double-escape backslashes; json.loads fixes that.
         try:
             return cast(str, json.loads(f'"{raw}"'))

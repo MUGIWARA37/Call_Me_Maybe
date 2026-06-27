@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from llm_sdk import Small_LLM_Model  # type: ignore[attr-defined]
+from llm_sdk import Small_LLM_Model
 from typing import Dict
 import json
 

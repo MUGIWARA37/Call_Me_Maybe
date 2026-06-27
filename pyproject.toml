@@ -9,3 +9,23 @@ dependencies = [
     "pydantic>=2.0",
     "numpy>=1.24",
 ]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.0",
+    "mypy>=1.0",
+]
+
+[tool.mypy]
+mypy_path = "llm_sdk"
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "transformers.*",
+    "huggingface_hub.*",
+    "llm_sdk.*"
+]
+ignore_missing_imports = true
+ignore_errors = true
+
