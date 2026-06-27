@@ -2,8 +2,6 @@ from .models import FunctionDefinition, Prompt
 from pydantic import BaseModel
 from typing import List
 
-__all__ = ["PromptBuilder", "Prompt"]
-
 
 class PromptBuilder(BaseModel):
     """Builds the text prompts that are fed into the LLM."""
@@ -50,7 +48,7 @@ class PromptBuilder(BaseModel):
                 "'Programming is fun' with asterisks'''\n"
                 "{\n"
                 '"source_string": "Programming is fun",\n'
-                '"regex": "([aeiouAEIOU])",\n'
+                '"regex": "[aeiouAEIOU]",\n'
                 '"replacement": "*"\n'
                 "}\n\n"
                 "Example:\n"

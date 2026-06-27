@@ -268,10 +268,10 @@ class Decoder(BaseModel):
             dict[str, Any], json.JSONDecoder().raw_decode(generated)[0]
         )
 
-        # Ensure number params are Python floats (not int).
-        for param_name, param_spec in function.parameters.items():
-            if param_spec.type == "number" and param_name in result:
-                result[param_name] = float(result[param_name])
+        # # Ensure number params are Python floats (not int).
+        # for param_name, param_spec in function.parameters.items():
+        #     if param_spec.type == "number" and param_name in result:
+        #         result[param_name] = float(result[param_name])
 
         return result
 
