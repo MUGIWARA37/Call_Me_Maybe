@@ -33,8 +33,12 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load input files.
-    functions = JsonParser(filepath=args.functions_definition).load_functions()
-    prompts = JsonParser(filepath=args.input).load_prompts()
+    try:
+        functions = JsonParser(filepath=args.functions_definition).load_functions()
+        prompts = JsonParser(filepath=args.input).load_prompts()
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Load models.
     model_selector = Small_LLM_Model()

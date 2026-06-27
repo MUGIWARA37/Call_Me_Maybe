@@ -42,7 +42,7 @@ class PromptBuilder(BaseModel):
                 "\"Hello 34 I'm 233 years old\" with NUMBERS'''\n"
                 "{\n"
                 '"source_string": "Hello 34 I\'m 233 years old",\n'
-                '"regex": "[0-9]+",\n'
+                '"regex": "\\\\d+",\n'
                 '"replacement": "NUMBERS"\n'
                 "}\n\n"
                 "Example:\n"
@@ -50,7 +50,7 @@ class PromptBuilder(BaseModel):
                 "'Programming is fun' with asterisks'''\n"
                 "{\n"
                 '"source_string": "Programming is fun",\n'
-                '"regex": "[aeiouAEIOU]",\n'
+                '"regex": "([aeiouAEIOU])",\n'
                 '"replacement": "*"\n'
                 "}\n\n"
                 "Example:\n"
