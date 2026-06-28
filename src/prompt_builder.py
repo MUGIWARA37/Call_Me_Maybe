@@ -1,4 +1,4 @@
-from .models import FunctionDefinition, Prompt
+from .models import FunctionDefinition, Prompt as Prompt
 from pydantic import BaseModel
 from typing import List
 
