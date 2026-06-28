@@ -126,8 +126,6 @@ The goal is to pick exactly one function name from the available list, using the
 
 This is a **constrained beam-search over function names**: the model can only ever output a sequence that is a real function name. Hallucination is structurally impossible.
 
-An `unknown` fallback is always prepended to the function list, so the selector always has a safe landing when no real function matches the prompt.
-
 ### Stage 2 — Parameter Extraction (`decoder.py`)
 
 Once the function is selected, the model must produce a JSON object `{"param": value, ...}` where each value matches the declared type.
@@ -163,7 +161,6 @@ BPE tokenizers merge `\n{` into a single token when they appear together in cont
 |---|---|
 | **Two separate models** | Qwen3-0.6B for selection (stronger instruction following), Qwen2.5-Coder-0.5B for decoding (better at structured/code-like output) |
 | **Pydantic for all models** | Validates types at load time; any schema mismatch raises a clear error before the LLM is even called |
-| **`unknown` fallback function** | Guarantees the selector always terminates even when no real function matches |
 | **Few-shot prompt for regex functions** | The `fn_substitute_string_with_regex` function requires the model to generate a regex pattern; hard-coded few-shot examples guide it toward the correct format without relying on zero-shot instruction following |
 | **`_decode_number_param` appends `.0`** | The output spec requires `number` parameters to be Python `float`. If the model never generates a dot, we patch the value before writing it |
 | **Single-pass generation** | All parameters are generated in one call to `_generate_shared`; this lets the model maintain coherent context across parameters (e.g., extracting both `a` and `b` from the same arithmetic prompt) |
@@ -198,9 +195,6 @@ Small models tend to loop when generating free-form strings — they repeat the 
 ### 4. Regex pattern extraction
 Extracting a regex pattern from a natural language description (e.g., "all vowels" → `[aeiouAEIOU]`) is genuinely hard for a 0.5B model. **Solution:** three dedicated few-shot examples for `fn_substitute_string_with_regex` that show the exact format expected.
 
-### 5. `unknown` fallback race condition
-Without a fallback, the constrained selector could crash or enter an infinite loop if no candidate survived. **Solution:** prepend an `unknown` function to the candidate list; it always provides a valid path even when the model's preferred token diverges from all real function names.
-
 ---
 
 ## Testing Strategy
@@ -212,7 +206,6 @@ Testing was performed manually and with small scripts (not submitted):
 3. **Type compliance**: for each result, assert that `number` values are `float`, `boolean` values are Python `bool`, and `string` values are `str`.
 4. **JSON round-trip**: `json.dumps(json.loads(output_file))` must not raise.
 5. **Edge cases tested**:
-   - Empty string prompt → `unknown` selected
    - Very large numbers (`265 + 345`) → correct float extraction
    - Special characters in strings (`'hello'`, regex patterns) → no escape errors
    - Keyboard interrupt mid-run → partial results saved cleanly

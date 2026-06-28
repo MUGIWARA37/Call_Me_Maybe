@@ -28,21 +28,13 @@ class JsonParser(BaseModel):
             ) from e
 
     def load_functions(self) -> list[FunctionDefinition]:
-        """Load function definitions and prepend the 'unknown' fallback."""
+        """Load function definitions."""
         try:
             data = self.read_json_file()
             if not isinstance(data, list):
                 raise ValueError(
                     f"Expected a JSON array in: {self.filepath}"
                 )
-            # 'unknown' is prepended so the selector always has a fallback
-            # when no real function matches the prompt.
-            data.insert(0, {
-                "name": "unknown",
-                "description": "The prompt requires a non-existing function",
-                "parameters": {"virtual_param": {"type": "number"}},
-                "returns": {"type": "number"}
-            })
             return [FunctionDefinition.model_validate(d) for d in data]
         except ValidationError as e:
             raise ValueError(f"Invalid function definition: {e}") from e

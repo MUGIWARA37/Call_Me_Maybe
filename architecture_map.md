@@ -70,10 +70,8 @@ User prompt (plain text)
 | Function | What it does | Why it exists |
 |---|---|---|
 | `read_json_file` | opens the file and parses JSON | single place for all file/JSON errors |
-| `load_functions` | loads function definitions + prepends `unknown` fallback | gives the selector a safe fallback when no function matches |
+| `load_functions` | loads function definitions | prepares the candidate list for the selector |
 | `load_prompts` | loads user prompts | validates every prompt before it enters the pipeline |
-
-> **Why `unknown`?** The selector must always find _something_. Without a fallback, it could crash or return garbage when no real function matches the prompt.
 
 ---
 

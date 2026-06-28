@@ -227,8 +227,6 @@ class Decoder(BaseModel):
             Prompt(prompt=prompt), function
         )
 
-        # Encode prompt + '{' together so '\n{' merges into one token,
-        # matching how it appears in the few-shot examples.
         input_ids = self.model.encode(
             built_prompt + "{\n"
         )[0].numpy().tolist()
@@ -258,6 +256,9 @@ class Decoder(BaseModel):
                     input_ids, use_repetition_penalty=False
                 )
                 input_ids.extend(sep_tokens)
+            elif param_spec.type == "null":
+                input_ids.extend(self.model.encode("null")[0].numpy().tolist())
+                input_ids.extend(sep_tokens)
 
         full_text = self.model.decode(input_ids)
         generated = full_text[len(built_prompt):]
@@ -267,11 +268,6 @@ class Decoder(BaseModel):
         result = cast(
             dict[str, Any], json.JSONDecoder().raw_decode(generated)[0]
         )
-
-        # # Ensure number params are Python floats (not int).
-        # for param_name, param_spec in function.parameters.items():
-        #     if param_spec.type == "number" and param_name in result:
-        #         result[param_name] = float(result[param_name])
 
         return result
 
