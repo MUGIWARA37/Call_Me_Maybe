@@ -47,7 +47,7 @@ def main() -> None:
             filepath=args.functions_definition
         ).load_functions()
         prompts = JsonParser(filepath=args.input).load_prompts()
-    except FileNotFoundError as e:
+    except (FileNotFoundError, PermissionError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
@@ -80,11 +80,14 @@ def main() -> None:
         )
 
     # Write whatever results were collected (full run or partial).
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
-
-    print(f"Done — {len(results)} result(s) written to '{args.output}'.")
+    try:
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+        print(f"Done — {len(results)} result(s) written to '{args.output}'.")
+    except (FileNotFoundError, PermissionError) as e:
+        print(f"Error writing output file: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
