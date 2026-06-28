@@ -10,3 +10,6 @@ env/
 # Python cache
 __pycache__/
 *.py[cod]
+
+# Output data
+data/output/
